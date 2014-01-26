@@ -1,0 +1,291 @@
+<!doctype html>
+<html>
+<head>
+    <title>Notflix</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="http://code.jquery.com/mobile/1.2.0/jquery.mobile-1.2.0.min.css">
+    <script src="http://code.jquery.com/jquery-1.8.2.min.js"></script>
+    <script src="http://code.jquery.com/mobile/1.2.0/jquery.mobile-1.2.0.min.js"></script>
+</head>
+<body>
+    <div data-role="page">
+ 
+        <div id="login">
+		<div data-role="header">
+            <h1>Notflix</h1>
+        </div><!-- /header -->
+ 
+        <div data-role="content">
+            <p>Log hier in</p>
+			
+			
+			<div data-role="form">
+				<label for="basic">Nickname:</label>
+				<input type="text" name="nickname" id="nickname" value=""  />
+				
+				<label for="basic">Password:</label>
+				<input type="password" name="password" id="password" value=""  />
+				
+				<button id="loginButton" data-role="button" data-icon="star" data-theme="b" data-inline="true">Login</button>
+			</div>
+			</div>
+		</div>
+			
+		<div id="userHome">
+			<div data-role="header">
+            <h1>Welcome</h1>
+        </div><!-- /header -->
+ 
+        <div data-role="content">
+            <button id="rateButton" data-role="button" data-icon="star" data-theme="b">Rate a film</button>
+			<br />
+			<button id="myRatingsButton" data-role="button" data-icon="star" data-theme="b">Get previous ratings</button>
+			<br />
+			<button id="logoutButton" data-role="button" data-icon="star" data-theme="b" data-inline="true">Sign me out</button>
+			<br />
+			
+			
+        </div><!-- /content -->
+		</div>
+		<div id="backDiv"><button id="backButton" data-role="button" data-icon="back" data-theme="b" data-inline="true">Back</button></div>
+		
+		<div id="rateFilm">
+		<div data-role="header">
+            <h1>Rate a film</h1>
+        </div><!-- /header -->
+		<div data-role="content">
+        	<div class="container">
+   	 			<div id="films" class="col-lg-4">
+      			</div>
+    		</div>
+        </div><!-- /content -->
+		
+		</div>
+		
+		<div id="myRatings">
+		<div data-role="header">
+            <h1>My ratings</h1>
+        </div><!-- /header -->
+		<div data-role="content">
+        	<div class="container">
+   	 			<div id="myRatings" class="col-lg-4">
+      			</div>
+    		</div>
+        </div><!-- /content -->
+		
+		</div>
+    </div><!-- /page -->
+    <script>
+    if (typeof (Storage) !== "undefined" && localStorage.getItem("token")) {
+        $("#login").hide();
+    	$("#userHome").show();
+    	$("#rateFilm").hide();
+    	$("#myRatings").hide();
+    	$("#backDiv").hide();
+	}
+	else {
+	    $("#login").show();
+		$("#userHome").hide();
+		$("#rateFilm").hide();
+		$("#myRatings").hide();
+		$("#backDiv").hide();
+	}
+    
+
+	
+    function rate(imdbNumber) {
+		var rating = new Object();
+			rating['nickname'] = localStorage.getItem("nickname"); 
+			rating['id'] = null;
+			rating['imdbNumber'] = imdbNumber;
+			rating['rating'] = document.getElementById("rating").value;
+		
+		$.ajax({
+			url : "resources/rate",
+			type : 'POST',
+			contentType : 'application/json; charset=UTF-8',
+			data : JSON.stringify(rating),
+			success: function (data) {
+				console.log(data);
+				window.location="mobile.html";
+			},
+			error: function (data) {
+				alert("error");
+			}
+		});		
+		
+	}
+    
+	//Methode om een rating te deleten
+	     	function rating(i, n) {
+	     		var id = i;
+	     		var imdbNumber = n;
+	     		
+	     			var jsonObject = new Object();
+	     			jsonObject['token'] = localStorage.getItem("token");
+	     			jsonObject['user'] = null;
+	     			console.log("filmrating: " + id + " has been deleted");
+	 
+	     			$.ajax({
+	    				url: "resources/rate/" + id,
+	    				type: 'DELETE',
+	    				contentType : 'application/json; charset=UTF-8',
+	    				data : JSON.stringify(jsonObject),
+	    				success: function (data) {
+	    					window.location = "mobile.html";
+	    				},
+	    				error: function () {
+	    					alert("Deletion failed");
+	    					window.location = "mobile.html";
+	    				}
+	    			});	
+	     		}
+	
+	     	//Het laden van de eigen ratings
+			var jsonObject = new Object();
+			
+			jsonObject['token'] = localStorage.getItem("token");
+			jsonObject['user'] = null;
+			
+			console.log(JSON.stringify(jsonObject));
+			
+			$.ajax({
+				url: "resources/ownRatings",
+				type: 'POST',
+				contentType : 'application/json; charset=UTF-8',
+				data : JSON.stringify(jsonObject),
+				success: function (data) {
+					console.log(data);
+					$.each(data, function(k, u) {
+						console.log(u);
+						var ratingObject = u.rating
+						console.log(ratingObject.imdbNumber);
+						$("#myRatings").append(
+							'<h3>' + u.titel + '</h3>'	
+							+ '<h4>Gegeven score: ' + ratingObject.rating + '</h4>'
+							+ '<button id="delete_' + ratingObject.imbdNumber 
+									+ '" type="submit" onClick="rating(\''+ ratingObject.id + '\',\'' + ratingObject.imdbNumber + '\')"'
+									+ 'class="btn btn-danger">Verwijderen</button>'
+						);					
+			   	 	});
+				},
+				error: function (data) {
+					alert("Could not load ratings...");
+				}
+			});	
+	
+	//login button click
+	$("#loginButton").click(function() {
+		var jsonObject = new Object();
+		var nickname = $("#nickname").val();
+		var password = $("#password").val();
+		jsonObject['nickname'] = nickname;
+		jsonObject['password'] = password;
+		
+		console.log(nickname + " & " +password);
+		console.log(JSON.stringify(jsonObject));
+		
+		//login				
+		$.ajax({
+			url : "resources/login",
+			type : 'POST',
+			contentType : 'application/json; charset=UTF-8',
+			data : JSON.stringify(jsonObject),
+			success : function(data) {
+				if (typeof (Storage) !== "undefined") {
+					// add token to localstorage
+					console.log(data);
+					localStorage.setItem("token", data.token);
+					localStorage.setItem("nickname", data.nickname);
+					$("#login").hide(250);
+					$("#userHome").show(250);
+					$("#backDiv").hide();
+					$("#myRatings").hide();
+					$("#rateFilm").hide();
+				} else {
+					alert("Browser could not use localstorage");
+				}
+			},
+			error : function(data) {
+				alert("Login failed...");
+			}
+		 });
+	});
+	
+	
+		var jsonObject = new Object();
+		jsonObject['token'] = localStorage.getItem("token");
+		jsonObject['user'] = null;
+		
+		//Het laden van de film lijst zonder ratings
+		$.ajax({
+			url : "resources/ownRatings/notRated",
+			type : 'POST',
+			contentType : 'application/json; charset=UTF-8',
+			data : JSON.stringify(jsonObject),
+			success: function (data) {
+				console.log(data);
+				$.each(data, function(k, u) {
+					$("#films").append('<h3>' + u.title + '</h3>'
+							+ '<p>'
+							+ '<strong>Description</strong><br />'
+							+ u.description + '<br />'
+							+ '<strong>Duration</strong><br />'
+							+ u.duration + ' minutes<br />'
+							+ '<strong>Director</strong><br />'
+							+ u.director + '<br />'
+							+ '<strong>Date</strong><br />'
+							+ u.date + '<br /> <br />'
+							+ '<input type="text" class="form-control" placeholder="Your Rating (1 through 10)" id="rating" name="rating"> <br />'
+							+ '<button id="submitRatingButton" onClick="rate(\'' + u.imdbNumber + '\')" class="btn btn-success">Rate!</button>'
+							+ '</p>'
+					)
+			    });
+			},
+			error: function (data) {
+				alert("Could not load movies");
+			}
+		});
+	
+		
+		
+		//rate button click
+		$("#rateButton").click(function() {
+			$("#login").hide();
+			$("#userHome").hide();
+			$("#rateFilm").show();
+			$("#myRatings").hide();
+			$("#backDiv").show();
+		});
+		
+		//back button click
+		$("#backButton").click(function() {
+			$("#login").hide();
+			$("#userHome").show();
+			$("#rateFilm").hide();
+			$("#myRatings").hide();
+			$("#backDiv").hide();
+		});
+		
+	// logout click event
+	$("#logoutButton").click(function() {
+		localStorage.removeItem("nickname");
+		localStorage.removeItem("token");
+		$("#login").show();
+		$("#userHome").hide();
+		$("#rateFilm").hide();
+		$("#myRatings").hide();
+		$("#backDiv").hide();
+	});
+	
+	//getRating button click
+	$("#myRatingsButton").click(function() {
+			$("#login").hide();
+			$("#userHome").hide();
+			$("#rateFilm").hide();
+			$("#myRatings").show();
+			$("#backDiv").show();
+	});
+    </script>
+</body>
+</html>

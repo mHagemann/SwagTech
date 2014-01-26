@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Notflix</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Bootstrap -->
+    <link href="css/bootstrap.min.css" rel="stylesheet" media="screen">
+
+    <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+	<script src="http://code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="../../assets/js/html5shiv.js"></script>
+      <script src="../../assets/js/respond.min.js"></script>
+    <![endif]-->
+  </head>
+
+	<body style="">
+
+    <div class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#">Notflix</a>
+        </div>
+        <div class="navbar-collapse collapse">
+          <ul class="nav navbar-nav">
+            <li><a href="index.html">Home</a></li>
+            <li id="users"><a href="users.html">Users</a></li>
+            <li id="ratings"><a href="ratings.html">Own Ratings</a></li>
+            <li id="rate" class="active"><a href="rate.html">Rate</a></li>
+
+          </ul>
+          <div id="logoutcontainer" class="navbar-form navbar-right">
+          	<button type="button" id="logoutButton" class="btn btn-success">Log out</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="jumbotron">
+      <div class="container">
+        <h1>Film list</h1>
+        <p>
+        	On this page you can find all the films that are not yet rated by yourself!
+        </p>
+      </div>
+    </div> 
+    <div class="container">
+   	 	<div id="films" class="col-lg-4">
+      		<h2>Films</h2>
+      	</div>
+    </div>
+
+    <script>
+    
+   		function rate(imdbNumber) {
+			var rating = new Object();
+ 			rating['nickname'] = localStorage.getItem("nickname"); 
+ 			rating['id'] = null;
+ 			rating['imdbNumber'] = imdbNumber;
+ 			rating['rating'] = document.getElementById("rating").value;
+			
+			$.ajax({
+				url : "resources/rate",
+				type : 'POST',
+				contentType : 'application/json; charset=UTF-8',
+				data : JSON.stringify(rating),
+				success: function (data) {
+					console.log(data);
+					window.location = "rate.html";
+				},
+				error: function (data) {
+					alert("Failed to rate the film");
+					window.location = "rate.html";
+				}
+			});		
+			
+		}
+    
+		$(document).ready(function() {
+			
+			//Kijkt of ingelogd
+			if(!localStorage.getItem("token")){
+				window.location = "index.html";
+			}
+			
+			var jsonObject = new Object();
+			jsonObject['token'] = localStorage.getItem("token");
+			jsonObject['user'] = null;
+			
+			//Het laden van de film lijst zonder ratings
+			$.ajax({
+				url : "resources/ownRatings/notRated",
+				type : 'POST',
+				contentType : 'application/json; charset=UTF-8',
+				data : JSON.stringify(jsonObject),
+				success: function (data) {
+					console.log(data);
+					$.each(data, function(k, u) {
+						$("#films").append('<h3>' + u.title + '</h3>'
+								+ '<p>'
+								+ '<strong>Description</strong><br />'
+								+ u.description + '<br />'
+								+ '<strong>Duration</strong><br />'
+								+ u.duration + ' minutes<br />'
+								+ '<strong>Director</strong><br />'
+								+ u.director + '<br />'
+								+ '<strong>Date</strong><br />'
+								+ u.date + '<br /> <br />'
+								+ '<input type="text" class="form-control" placeholder="Your Rating (1 through 10)" id="rating" name="rating"> <br />'
+								+ '<button id="rateButton" onClick="rate(\'' + u.imdbNumber + '\')" class="btn btn-success">Rate!</button>'
+								//+ '<img src="http://placehold.it/350x150" class="moviePoster" id="moviePoster' + film.imdbNumber + '/>' 
+								+ '</p>'
+						)
+				    });
+				},
+				error: function (data) {
+					alert("Could not load movies");
+				}
+			});		
+			
+			//Logout button onclick
+			$("#logoutButton").click(function() {
+				localStorage.removeItem("nickname");
+				localStorage.removeItem("token");
+				window.location = "index.html";
+			});
+			
+		});
+	</script>
+	
+</body>
+</html>

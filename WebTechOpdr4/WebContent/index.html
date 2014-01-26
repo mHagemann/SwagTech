@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Notflix</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Bootstrap -->
+    <link href="css/bootstrap.min.css" rel="stylesheet" media="screen">
+
+    <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+	<script src="http://code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="../../assets/js/html5shiv.js"></script>
+      <script src="../../assets/js/respond.min.js"></script>
+    <![endif]-->
+  </head>
+
+	<body style="">
+
+    <div class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#">Notflix</a>
+        </div>
+        <div class="navbar-collapse collapse">
+          <ul class="nav navbar-nav">
+            <li class="active"><a href="index.html">Home</a></li>
+            <li id="users"><a href="users.html">Users</a></li>
+            <li id="ratings"><a href="ratings.html">Own Ratings</a></li>
+            <li id="rate"><a href="rate.html">Rate</a></li>
+            <li id="register"><a href="register.html">Register</a></li>
+          </ul>
+          <div id="logincontainer" class="navbar-form navbar-right">
+            <div class="form-group">
+              <input type="text" class="form-control" placeholder="Nickname" id="nickName" name="nickName" autofocus>
+            </div>
+            <div class="form-group">
+              <input type="password" class="form-control" id="password" name="password" placeholder="Password">
+            </div>
+            <button type="button" id="loginButton" class="btn btn-success">Sign in</button>
+          </div>
+          <div id="logoutcontainer" class="navbar-form navbar-right">
+          	<button type="button" id="logoutButton" class="btn btn-success">Log out</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="jumbotron">
+      <div class="container">
+        <h1>Notflix</h1>
+        <p>
+        	Welcome to Notflix <br />
+        	<a class="btn btn-primary btn-lg" href="register.html">Register »</a>
+        </p>
+      </div>
+    </div> 
+    <div class="container">
+    	<div id="films" class="col-lg-4">
+    	<h2><strong>Films</strong></h2>
+      	</div>
+    </div>
+
+    <script>
+    
+    function getPoster(imdbnummer) {
+		//Ophalen van de posters
+			$.ajax({
+				url: "http://www.omdbapi.com/?i=" + imdbnummer,
+				type: 'get',
+				dataType: 'json', 
+				success: function (data) {
+					var URL = data.Poster;
+					console.log(URL)
+					document.getElementById("poster" + imdbnummer).src=URL;
+					/*$("#posters").append(
+							'<img height="280px" src="' + URL + '" class="moviePoster"><br />'
+					);*/
+				},
+				error: function (data) {
+					alert("Could not load movies");
+				}
+			});
+		}
+    
+		$(document).ready(function() {
+			
+			// login click event
+			$("#loginButton").click(function() {
+				
+				var jsonObject = new Object();
+				var nickname = $("#nickName").val();
+				var password = $("#password").val();
+				jsonObject['nickname'] = nickname;
+				jsonObject['password'] = password;
+				
+				console.log(nickname + " & " +password);
+				console.log(JSON.stringify(jsonObject));
+				
+				
+								
+				//login				
+				$.ajax({
+					url : "resources/login",
+					type : 'POST',
+					contentType : 'application/json; charset=UTF-8',
+					data : JSON.stringify(jsonObject),
+					success : function(data) {
+						if (typeof (Storage) !== "undefined") {
+							// add token to localstorage
+							console.log(data);
+							localStorage.setItem("token", data.token);
+							localStorage.setItem("nickname", data.nickname);
+							$("#logincontainer").hide();
+							$("#rate").show();
+							$("#ratings").show();
+							$(".jumbotron").hide();
+							$("#logoutcontainer").show();
+							$("#users").show();
+							$("#register").hide();
+						} else {
+							alert("Browser could not use localstorage");
+						}
+					},
+					error : function(data) {
+						alert("Login failed...");
+					}
+				 });
+				
+			});	
+						
+			//Het laden van de film lijst
+			$.ajax({
+				url: "resources/films",
+				type: 'get',
+				dataType: 'json', 
+				success: function (data) {
+					console.log(data);
+					$.each(data, function(k, u) {
+						var film = u.film;
+						$("#films").append('<h3>' + film.title + '</h3>'
+								+ '<p>'
+								+ '<strong>Description</strong><br />'
+								+ film.description + '<br />'
+								+ '<strong>Duration</strong><br />'
+								+ film.duration + ' minutes<br />'
+								+ '<strong>Director</strong><br />'
+								+ film.director + '<br />'
+								+ '<strong>Date</strong><br />'
+								+ film.date + '<br />'
+								+ '<strong>Average rating</strong><br />'
+								+ u.average + '/10<br />' 
+								+ '<img height="280px" src="#src" class="moviePoster" id="poster' + film.imdbNumber + '"><br />'
+								+ '</p>'
+						);
+						getPoster(film.imdbNumber);
+				    });
+				},
+				error: function (data) {
+					alert("Could not load movies");
+				}
+			});		
+			
+			if (typeof (Storage) !== "undefined" && localStorage.getItem("token")) {
+				$("#logincontainer").hide();
+				$(".jumbotron").hide();
+				$("#users").show();
+				$("#rate").show();
+				$("#ratings").show();
+				$("#register").hide();
+				$("#logoutcontainer").show()
+			}
+			else {
+				$("#rate").hide();
+				$("#ratings").hide();
+				$("#users").hide();
+				$("#logoutcontainer").hide();
+			}
+			
+			// logout click event
+			$("#logoutButton").click(function() {
+				localStorage.removeItem("nickname");
+				localStorage.removeItem("token");
+				$("#logincontainer").show();
+				$("#logoutcontainer").hide();
+				$(".jumbotron").show();
+				$("#rate").hide()
+				$("#ratings").hide()
+				$("#users").hide();
+				$("#register").show();
+			});
+			
+		});
+	</script>
+	
+</body>
+</html>

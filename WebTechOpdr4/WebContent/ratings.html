@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Notflix</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Bootstrap -->
+    <link href="css/bootstrap.min.css" rel="stylesheet" media="screen">
+
+	<script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+	<script src="http://code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="../../assets/js/html5shiv.js"></script>
+      <script src="../../assets/js/respond.min.js"></script>
+    <![endif]-->
+    
+  </head>
+
+	<body style="">
+
+    <div class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#">Notflix</a>
+        </div>
+        <div class="navbar-collapse collapse">
+          <ul class="nav navbar-nav">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="users.html">Users</a></li>
+            <li class="active"><a href="ratings.html">Own Ratings</a></li>
+            <li><a href="rate.html">Rate</a></li>
+          </ul>
+          <div class="navbar-form navbar-right">
+            <button id="logoutButton" type="submit" class="btn btn-success">Log out</button>
+          </div>
+        </div><!--/.navbar-collapse -->
+      </div>
+    </div>
+
+    <!-- Main jumbotron for a primary marketing message or call to action -->
+    <div class="jumbotron">
+      <div class="container">
+        <h1>Ratings</h1>
+        <p>
+        	You can find your own ratings here!
+        </p>
+      </div>
+    </div>
+    <div class="container">
+    	<div id="ratingslist">
+    	</div>
+    </div>
+   
+    
+     <script>
+    
+     	//Methode om een rating te wijzigen of te deleten
+     	function rating(i, n, t) {
+     		var id = i;
+     		var type = t;
+     		var imdbNumber = n;
+     		
+     		if (type == "wijzig"){
+     			
+     			var rating = new Object();
+     			rating['nickname'] = localStorage.getItem("nickname"); 
+     			rating['id'] = 0;
+     			rating['imdbNumber'] = imdbNumber;
+     			rating['rating'] = document.getElementById("rating").value;
+     			
+     			$.ajax({
+    				url: "resources/rate/" + id,
+    				type: 'POST',
+    				contentType : 'application/json; charset=UTF-8',
+    				data : JSON.stringify(rating),
+    				success: function (data) {
+    					window.location = "ratings.html";
+    				},
+    				error: function (data) {
+    					alert("Failed to update your rating");
+    					window.location = "ratings.html";
+    				}
+    			});
+     			
+     		}
+     		if (type == "delete") {
+     			
+     			var jsonObject = new Object();
+     			jsonObject['token'] = localStorage.getItem("token");
+     			jsonObject['user'] = null;
+     			console.log("filmrating: " + id + " has been deleted");
+
+     			$.ajax({
+    				url: "resources/rate/" + id,
+    				type: 'DELETE',
+    				contentType : 'application/json; charset=UTF-8',
+    				data : JSON.stringify(jsonObject),
+    				success: function (data) {
+    					window.location = "ratings.html";
+    				},
+    				error: function () {
+    					alert("Deletion failed");
+    					window.location = "ratings.html";
+    				}
+    			});	
+     		}
+ 		}
+     
+     	 $(document).ready(function() {
+			
+			if(!localStorage.getItem("token")){
+				window.location = "index.html";
+			}
+			
+			//Logout button onclick
+			$("#logoutButton").click(function() {
+				localStorage.removeItem("nickname");
+				localStorage.removeItem("token");
+				window.location = "index.html";
+			});
+			
+			//Het laden van de eigen ratings
+			var jsonObject = new Object();
+			
+			jsonObject['token'] = localStorage.getItem("token");
+			jsonObject['user'] = null;
+			
+			$.ajax({
+				url: "resources/ownRatings",
+				type: 'POST',
+				contentType : 'application/json; charset=UTF-8',
+				data : JSON.stringify(jsonObject),
+				success: function (data) {
+					$.each(data, function(k, u) {
+						var ratingObject = u.rating
+						$("#ratingslist").append(
+							'<h3>' + u.titel + '</h3>'	
+							+ '<h4>Given score: ' + ratingObject.rating + '</h4>'
+							+ '<h4>Change score:</h4>'
+							+ '<input type="text" class="form-control" placeholder="Your Rating (1 through 10)" id="rating" name="rating"> <br />'
+							+ '<button id="wijzig_' + ratingObject.imdbNumber 
+									+ '" type="submit" onClick="rating(\''+ ratingObject.id + '\',\'' + ratingObject.imdbNumber + '\', \'wijzig\');"'
+									+ ' class="btn btn-success">Change</button>   '
+							+ '<button id="delete_' + ratingObject.imbdNumber 
+									+ '" type="submit" onClick="rating(\''+ ratingObject.id + '\',\'' + ratingObject.imdbNumber + '\', \'delete\');" '
+									+ 'class="btn btn-danger">Delete</button>'
+						);					
+			   	 	});
+				},
+				error: function (data) {
+					alert("Could not load ratings...");
+				}
+			});	
+			
+		}); 
+		
+	</script>
+	
+    
+</body>
+</html>

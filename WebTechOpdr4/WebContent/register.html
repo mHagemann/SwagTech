@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Notflix</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Bootstrap -->
+    <link href="css/bootstrap.min.css" rel="stylesheet" media="screen">
+
+	<script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+	<script src="http://code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="../../assets/js/html5shiv.js"></script>
+      <script src="../../assets/js/respond.min.js"></script>
+    <![endif]-->
+  </head>
+
+	<body style="">
+
+    <div class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#">Notflix</a>
+        </div>
+        <div class="navbar-collapse collapse">
+          <ul class="nav navbar-nav">
+            <li><a href="index.html">Home</a></li>
+            <li class="active"><a href="register.html">Register</a></li>
+          </ul>
+        </div><!--/.navbar-collapse -->
+      </div>
+    </div>
+   <div class="jumbotron"></div>
+    <div class="container">
+      <h1>Register</h1>
+		<div class="navbar-form navbar-center">
+          	 <div class="form-group">
+              <input id="nickname" type="text" placeholder="Nickname" class="form-control"><br />
+              <input id="password" type="password" placeholder="Password" class="form-control">
+              <input id="firstname" type="text" placeholder="Firstname" class="form-control">
+              <input id="tussenvoegsel" type="text" placeholder="Prefix" class="form-control">
+              <input id="surname" type="text" placeholder="Surname" class="form-control">
+            </div>
+            <button id="registerButton" type="submit" class="btn btn-success">Register</button>
+          </div>
+    </div>
+    
+    <script>
+    
+   		$(document).ready(function() {
+   			// register click event
+			$("#registerButton").click(function() {
+				
+				var jsonObject = new Object();
+				jsonObject['nickname'] = $("#nickname").val();
+				jsonObject['password'] = $("#password").val();
+				jsonObject['surname'] = $("#surname").val();
+				jsonObject['tussenvoegsel'] = $("#tussenvoegsel").val();
+				jsonObject['firstname'] = $("#firstname").val();
+				
+				//id maakt niet uit.. die wordt op de server bepaald
+				jsonObject['id'] = "666";
+				
+				$.ajax({
+					url : "resources/register",
+					type : 'POST',
+					contentType : 'application/json; charset=UTF-8',
+					data : JSON.stringify(jsonObject),
+					success : function(data) {
+						console.log(data);
+						alert("Registered succesfully!");
+						window.location = "index.html";
+					},
+					error : function(data) {
+						alert("API request failed :(");
+					}
+				 });
+			});		
+		});
+    
+    </script>
+    
+</body>
+</html>
